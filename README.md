@@ -44,11 +44,13 @@ Physical Keyboard / Mouse
 &nbsp;&nbsp;&nbsp;│  
 &nbsp;&nbsp;&nbsp;▼  
 Linux Desktop
+<br>
 
 `keyboard-mouse-ui.py`  
 &nbsp;&nbsp;&nbsp;│  
 &nbsp;&nbsp;&nbsp;▼  
 `~/.config/keyboard-mouse/config.json`
+<br>
 
 `keyboard-mouse.sh`  
 &nbsp;&nbsp;&nbsp;│  
