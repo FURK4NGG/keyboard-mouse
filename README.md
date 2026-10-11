@@ -13,3 +13,6 @@ git clone https://github.com/FURK4NGG/keyboard-mouse.git
 cd keyboard-mouse  
 chmod +x install.sh  
 ./install.sh  
+
+## 🔒 License  
+<h1 align="center">📜 GPL-3.0 License</h1>
