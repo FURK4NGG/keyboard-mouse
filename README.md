@@ -40,7 +40,10 @@ Physical Keyboard / Mouse
 `keyboard-mouse-daemon.py`  
 &nbsp;&nbsp;&nbsp;│  
 &nbsp;&nbsp;&nbsp;▼  
-`ydotool` → Virtual Mouse Input
+`ydotool` → Virtual Mouse Input  
+&nbsp;&nbsp;&nbsp;│  
+&nbsp;&nbsp;&nbsp;▼  
+Linux Desktop
 
 `keyboard-mouse-ui.py`  
 &nbsp;&nbsp;&nbsp;│  
@@ -48,31 +51,64 @@ Physical Keyboard / Mouse
 `~/.config/keyboard-mouse/config.json`
 
 `keyboard-mouse.sh`  
-│  
-├── Starts and stops the daemon  
-├── Restarts the daemon  
-├── Opens the settings interface  
-└── Manages daemon process state
+&nbsp;&nbsp;&nbsp;│  
+&nbsp;&nbsp;&nbsp;├── Daemon management  
+&nbsp;&nbsp;&nbsp;├── Settings interface launcher  
+&nbsp;&nbsp;&nbsp;└── Process control
 
 ## [`keyboard-mouse.sh`]
-- Provides command-line controls for managing the Keyboard Mouse daemon.
-- Starts the daemon in the background.
-- Stops the running daemon and handles its process cleanup.
-- Restarts the daemon when needed.
-- Launches the graphical settings interface.
-- Uses PID and runtime state files to help manage daemon instances.
-- Redirects daemon output to a log file for troubleshooting.
+
+- Provides command-line controls for managing the Keyboard Mouse daemon.  
+  Keyboard Mouse daemon'unu yönetmek için komut satırı kontrolleri sağlar.
+
+- Starts the daemon in the background.  
+  Daemon'u arka planda başlatır.
+
+- Stops the running daemon and cleans up its processes.  
+  Çalışan daemon'u durdurur ve işlemlerini temizler.
+
+- Restarts the daemon when needed.  
+  Gerektiğinde daemon'u yeniden başlatır.
+
+- Launches the graphical settings interface.  
+  Grafiksel ayarlar arayüzünü açar.
+
+- Uses runtime state and PID files to help manage daemon instances.  
+  Daemon örneklerini yönetmeye yardımcı olmak için çalışma zamanı durum ve PID dosyalarını kullanır.
+
+- Redirects daemon output to a log file for troubleshooting.  
+  Hata ayıklamayı kolaylaştırmak için daemon çıktısını bir günlük dosyasına yönlendirir.
 
 ## [`keyboard-mouse-daemon.py`]
-- Reads keyboard and mouse events using `evdev`.
-- Detects configured shortcuts for mouse movement, clicking, and scrolling.
-- Simulates mouse actions through `ydotool`.
-- Supports configurable movement speed and mouse mode controls.
+
+- Monitors keyboard and mouse events using `evdev`.  
+  `evdev` kullanarak klavye ve fare olaylarını izler.
+
+- Detects configured shortcuts for mouse movement, clicking, and scrolling.  
+  Fare hareketi, tıklama ve kaydırma için yapılandırılmış kısayolları algılar.
+
+- Simulates mouse actions through `ydotool`.  
+  `ydotool` aracılığıyla fare hareketlerini simüle eder.
+
+- Supports adjustable movement speed and fast/slow modes.  
+  Ayarlanabilir hareket hızını ve hızlı/yavaş modlarını destekler.
+
+- Manages mouse mode activation and deactivation.  
+  Fare modunun etkinleştirilmesini ve devre dışı bırakılmasını yönetir.
 
 ## [`keyboard-mouse-ui.py`]
-- Provides a graphical interface for customizing key bindings.
-- Configures mouse movement, clicks, scrolling, and mode shortcuts.
-- Saves settings to a JSON configuration file.
+
+- Provides a graphical interface for customizing keyboard shortcuts.  
+  Klavye kısayollarını özelleştirmek için grafiksel bir arayüz sunar.
+
+- Allows customization of movement, clicking, scrolling, and mouse mode controls.  
+  Hareket, tıklama, kaydırma ve fare modu kontrollerinin özelleştirilmesini sağlar.
+
+- Saves settings to a persistent JSON configuration file.  
+  Ayarları kalıcı bir JSON yapılandırma dosyasına kaydeder.
+
+- Lets users configure controls without manually editing configuration files.  
+  Kullanıcıların yapılandırma dosyalarını elle düzenlemeden kontrolleri ayarlamasını sağlar.
 
 
 # Fast Installation  
