@@ -30,6 +30,7 @@ Other Wayland compositors and desktop environments have not been verified yet.
 - [x] Linux input handling through `evdev`
 - [x] Mouse input simulation via `ydotool`
 - [x] Hyprland integration with automatic configuration reload
+- [x] English and Turkish interface languages
 
 
 ## ❓ HOW IT WORKS ❓
