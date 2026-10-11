@@ -1,4 +1,5 @@
-# keyboard-mouse
+## 👀 keyboard-mouse Overview  
+**Keyboard Mouse** is a Linux utility that lets you control your mouse using keyboard shortcuts, with configurable key bindings, adjustable movement speed, and a dedicated settings interface for easy customization.
 
 ![keyboard-mouse Demo Video](https://github.com/FURK4NGG/keyboard-mouse/blob/main/%7B%7D/keyboard-mouse.gif)
 
