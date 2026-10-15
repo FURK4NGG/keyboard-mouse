@@ -44,6 +44,18 @@ for cmd in python3 systemctl; do
     command -v "$cmd" >/dev/null 2>&1 || die "Required command not found: $cmd"
 done
 
+step "Installing required packages"
+if command -v pacman >/dev/null 2>&1; then
+    sudo pacman -S --needed python-evdev ydotool libnotify
+    ok "Required packages are installed."
+elif command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update
+    sudo apt-get install -y python3-evdev ydotool libnotify-bin
+    ok "Required packages are installed."
+else
+    die "Unsupported package manager. Install python-evdev, ydotool, and libnotify manually."
+fi
+
 step "Enabling and starting ydotool"
 if systemctl --user list-unit-files ydotool.service --no-legend 2>/dev/null | grep -q 'ydotool.service'; then
     systemctl --user enable --now ydotool.service
