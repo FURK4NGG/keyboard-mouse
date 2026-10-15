@@ -33,6 +33,64 @@ Other Wayland compositors and desktop environments have not been verified yet.
 - [x] English and Turkish interface languages
 
 
+## 📦 Setup
+
+Directory Structure  
+~/.config/keyboard-mouse/  
+├── install.sh  
+├── keyboard-mouse-daemon.py  
+├── keyboard-mouse-ui.py  
+└── keyboard-mouse.sh  
+<br>
+
+
+```
+systemctl --user enable --now ydotool.service
+sudo usermod -aG input "$USER"
+sudo mkdir -p ~/.config/scripts/
+
+git clone https://github.com/FURK4NGG/keyboard-mouse.git
+cd keyboard-mouse
+mkdir -p ~/.config/keyboard-mouse
+cp keyboard-mouse-daemon.py \
+   keyboard-mouse-ui.py \
+   keyboard-mouse.sh \
+   install.sh \
+   LICENSE \
+   README.md \
+   ~/.config/keyboard-mouse/
+
+sudo chown "$USER:$USER" ~/.config/scripts/keyboard-mouse.sh
+sudo chown "$USER:$USER" ~/.config/scripts/keyboard-mouse-daemon.py
+sudo chown "$USER:$USER" ~/.config/scripts/keyboard-mouse-ui.py
+```
+
+chmod +x ~/.config/keyboard-mouse/keyboard-mouse-daemon.py  
+chmod +x ~/.config/keyboard-mouse/keyboard-mouse-ui.py  
+chmod +x ~/.config/keyboard-mouse/keyboard-mouse.sh  
+
+Arch
+```
+sudo pacman -S python-evdev ydotool libnotify
+```
+Debian / Ubuntu
+```
+sudo apt install 
+```
+Fedora
+```
+sudo dnf install 
+```
+<br><br>
+
+## 🎉 Run
+```
+~/.config/scripts/keyboard-mouse.sh daemon
+hyprctl reload
+hyprctl configerrors
+```
+
+
 ## ❓ HOW IT WORKS ❓
 
 Physical Keyboard / Mouse  
