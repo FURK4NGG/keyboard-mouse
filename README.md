@@ -40,7 +40,9 @@ Directory Structure
 ├── install.sh  
 ├── keyboard-mouse-daemon.py  
 ├── keyboard-mouse-ui.py  
-└── keyboard-mouse.sh  
+├── keyboard-mouse.sh  
+├── config.json  (This file is auto-generated)  
+└── ui-language.json  (This file is auto-generated)  
 <br>
 
 
