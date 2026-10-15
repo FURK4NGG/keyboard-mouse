@@ -63,11 +63,11 @@ cp keyboard-mouse-daemon.py \
 sudo chown "$USER:$USER" ~/.config/scripts/keyboard-mouse.sh
 sudo chown "$USER:$USER" ~/.config/scripts/keyboard-mouse-daemon.py
 sudo chown "$USER:$USER" ~/.config/scripts/keyboard-mouse-ui.py
-```
-
 chmod +x ~/.config/keyboard-mouse/keyboard-mouse-daemon.py  
 chmod +x ~/.config/keyboard-mouse/keyboard-mouse-ui.py  
 chmod +x ~/.config/keyboard-mouse/keyboard-mouse.sh  
+```
+
 
 Arch
 ```
@@ -89,6 +89,8 @@ sudo dnf install
 hyprctl reload
 hyprctl configerrors
 ```
+
+<br><br>
 
 
 ## ❓ HOW IT WORKS ❓
