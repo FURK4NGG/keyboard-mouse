@@ -75,11 +75,12 @@ sudo pacman -S python-evdev ydotool libnotify
 ```
 Debian / Ubuntu
 ```
-sudo apt install 
+sudo apt update
+sudo apt install python3-evdev ydotool libnotify-bin
 ```
 Fedora
 ```
-sudo dnf install 
+sudo dnf install python3-evdev ydotool libnotify
 ```
 <br><br>
 
