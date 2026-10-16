@@ -1,16 +1,17 @@
+
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
 APP_NAME="Keyboard Mouse"
-# Resolve the directory containing this installer, regardless of where the
-# project folder is located (e.g. Desktop/keyboard-mouse or Downloads/keyboard-mouse).
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="$PROJECT_DIR"
-TARGET_DIR="$HOME/.config/scripts"
 
-LAUNCHER_SRC="$SOURCE_DIR/keyboard-mouse.sh"
-DAEMON_SRC="$SOURCE_DIR/keyboard-mouse-daemon.py"
-UI_SRC="$SOURCE_DIR/keyboard-mouse-ui.py"
+TARGET_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/keyboard-mouse"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/keyboard-mouse"
+LOG_FILE="/tmp/keyboard-mouse-daemon.log"
+
+LAUNCHER_SRC="$PROJECT_DIR/keyboard-mouse.sh"
+DAEMON_SRC="$PROJECT_DIR/keyboard-mouse-daemon.py"
+UI_SRC="$PROJECT_DIR/keyboard-mouse-ui.py"
 
 LAUNCHER_DST="$TARGET_DIR/keyboard-mouse.sh"
 DAEMON_DST="$TARGET_DIR/keyboard-mouse-daemon.py"
@@ -28,108 +29,241 @@ warn() { printf "${YELLOW}[WARNING]${RESET} %s\n" "$*"; }
 err()  { printf "${RED}[ERROR]${RESET} %s\n" "$*" >&2; }
 die()  { err "$*"; exit 1; }
 
-trap 'rc=$?; err "Installation stopped unexpectedly (line: $LINENO, exit code: $rc)."; exit "$rc"' ERR
+trap 'rc=$?; err "Installation failed at line $LINENO (exit code: $rc)."; exit "$rc"' ERR
 
-printf '%s\n' "====================================" \
-              "       $APP_NAME Installer" \
-              "===================================="
+printf '%s\n' \
+    "====================================" \
+    "       $APP_NAME Installer" \
+    "===================================="
+
+# --------------------------------------------------
+# Check source files
+# --------------------------------------------------
 
 step "Checking source files"
-[[ -f "$LAUNCHER_SRC" ]] || die "Source file not found: $LAUNCHER_SRC"
-[[ -f "$DAEMON_SRC" ]] || die "Source file not found: $DAEMON_SRC"
-[[ -f "$UI_SRC" ]] || die "Source file not found: $UI_SRC"
-ok "Launcher, daemon, and UI source files were found in: $SOURCE_DIR"
 
-for cmd in python3 systemctl; do
-    command -v "$cmd" >/dev/null 2>&1 || die "Required command not found: $cmd"
-done
+[[ -f "$LAUNCHER_SRC" ]] || die "Missing file: $LAUNCHER_SRC"
+[[ -f "$DAEMON_SRC" ]] || die "Missing file: $DAEMON_SRC"
+[[ -f "$UI_SRC" ]] || die "Missing file: $UI_SRC"
 
-step "Installing required packages"
+command -v python3 >/dev/null 2>&1 ||
+    die "Python 3 is not installed."
+
+ok "All source files found."
+
+# --------------------------------------------------
+# Detect package manager
+# --------------------------------------------------
+
+step "Detecting package manager"
+
 if command -v pacman >/dev/null 2>&1; then
-    sudo pacman -S --needed python-evdev ydotool libnotify
-    ok "Required packages are installed."
+    PM="pacman"
 elif command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update
-    sudo apt-get install -y python3-evdev ydotool libnotify-bin
-    ok "Required packages are installed."
+    PM="apt"
+elif command -v dnf >/dev/null 2>&1; then
+    PM="dnf"
 else
-    die "Unsupported package manager. Install python-evdev, ydotool, and libnotify manually."
+    die "Unsupported package manager."
 fi
 
-step "Enabling and starting ydotool"
-if systemctl --user list-unit-files ydotool.service --no-legend 2>/dev/null | grep -q 'ydotool.service'; then
-    systemctl --user enable --now ydotool.service
-    ok "ydotool.service was enabled and started."
-else
-    warn "ydotool.service was not found. Check whether the ydotool package/service is installed; continuing."
-fi
+# --------------------------------------------------
+# Install dependencies
+# --------------------------------------------------
 
-step "Checking input-device permissions"
-if getent group input >/dev/null 2>&1; then
-    if id -nG "$USER" | tr ' ' '\n' | grep -Fxq input; then
-        ok "$USER is already a member of the input group."
-    else
-        if command -v sudo >/dev/null 2>&1; then
-            sudo usermod -aG input "$USER"
-            warn "$USER was added to the input group. Log out and log back in for the group change to take full effect."
-        else
-            die "sudo was not found; unable to add the user to the input group."
-        fi
-    fi
-else
-    warn "The 'input' group does not exist on this system. Check input-device permissions separately."
-fi
+step "Installing dependencies"
 
-step "Copying files to $TARGET_DIR"
+case "$PM" in
+    pacman)
+        sudo pacman -S --needed \
+            python-gobject \
+            gtk4 \
+            python-evdev \
+            ydotool \
+            libnotify
+        ;;
+    apt)
+        sudo apt-get update
+        sudo apt-get install -y \
+            python3-gi \
+            gir1.2-gtk-4.0 \
+            python3-evdev \
+            ydotool \
+            libnotify-bin
+        ;;
+    dnf)
+        sudo dnf install -y \
+            python3-gobject \
+            gtk4 \
+            python3-evdev \
+            ydotool \
+            libnotify
+        ;;
+esac
+
+ok "Dependency installation completed."
+
+# --------------------------------------------------
+# Create directories
+# --------------------------------------------------
+
+step "Creating directories"
+
 mkdir -p "$TARGET_DIR"
+mkdir -p "$STATE_DIR"
+
+chmod 700 "$STATE_DIR"
+
+ok "Application directory: $TARGET_DIR"
+
+# --------------------------------------------------
+# Stop an old daemon before replacing its files
+# --------------------------------------------------
+
+step "Stopping an existing daemon"
+
+if [[ -x "$LAUNCHER_DST" ]]; then
+    "$LAUNCHER_DST" restart-daemon >/dev/null 2>&1 || true
+    "$LAUNCHER_DST" stop >/dev/null 2>&1 || true
+fi
+
+# --------------------------------------------------
+# Copy application files
+# --------------------------------------------------
+
+step "Installing application files"
+
 install -m 755 "$LAUNCHER_SRC" "$LAUNCHER_DST"
 install -m 755 "$DAEMON_SRC" "$DAEMON_DST"
 install -m 755 "$UI_SRC" "$UI_DST"
-ok "keyboard-mouse.sh, keyboard-mouse-daemon.py, and keyboard-mouse-ui.py were copied."
 
-step "Checking Python syntax"
-python3 -m py_compile "$DAEMON_DST" "$UI_DST"
-ok "Python syntax checks passed."
+ok "Launcher, daemon and UI installed."
 
-step "Starting the daemon"
-if "$LAUNCHER_DST" daemon; then
-    sleep 0.5
-    if pgrep -u "$(id -u)" -f '[k]eyboard-mouse-daemon\.py' >/dev/null 2>&1; then
-        ok "The daemon process appears to be running."
+# --------------------------------------------------
+# Check Python
+# --------------------------------------------------
+
+step "Checking Python"
+
+if python3 -c 'import math; import evdev' >/dev/null 2>&1; then
+    ok "Python and evdev imports succeeded."
+else
+    warn "Python or evdev import failed."
+    warn "The daemon may not start. Check the error below:"
+    python3 -c 'import math; import evdev' 2>&1 || true
+fi
+
+# Syntax check does not guarantee that imports will work.
+if python3 -m py_compile "$DAEMON_DST" "$UI_DST" 2>/dev/null; then
+    ok "Python syntax checks passed."
+else
+    warn "Python syntax check failed."
+fi
+
+# --------------------------------------------------
+# Start ydotool service if available
+# --------------------------------------------------
+
+step "Checking ydotool service"
+
+if command -v systemctl >/dev/null 2>&1 &&
+   systemctl --user list-unit-files ydotool.service \
+       --no-legend 2>/dev/null |
+       grep -q 'ydotool.service'; then
+
+    if systemctl --user enable --now ydotool.service; then
+        ok "ydotool service started."
     else
-        warn "The start command returned, but the daemon process was not detected. Checking the log."
-        if [[ -f /tmp/keyboard-mouse-daemon.log ]]; then
-            tail -n 40 /tmp/keyboard-mouse-daemon.log
+        warn "Could not start ydotool service."
+    fi
+else
+    warn "ydotool user service not found; continuing."
+fi
+
+# --------------------------------------------------
+# Input permissions
+# --------------------------------------------------
+
+step "Checking input permissions"
+
+CURRENT_USER="$(id -un)"
+
+if getent group input >/dev/null 2>&1; then
+    if id -nG "$CURRENT_USER" |
+        tr ' ' '\n' |
+        grep -Fxq input; then
+        ok "User already belongs to the input group."
+    else
+        printf "Add %s to the input group? [y/N] " "$CURRENT_USER"
+        read -r INPUT_CHOICE
+
+        if [[ "$INPUT_CHOICE" =~ ^[Yy]$ ]]; then
+            sudo usermod -aG input "$CURRENT_USER"
+            warn "Log out and log in again for group changes to apply."
+        else
+            warn "Input-group change skipped."
         fi
-        warn "Please verify that the daemon is running."
     fi
 else
-    warn "The daemon start command failed."
-    [[ -f /tmp/keyboard-mouse-daemon.log ]] && tail -n 40 /tmp/keyboard-mouse-daemon.log || true
+    warn "The input group does not exist."
 fi
 
-step "Reloading the Hyprland configuration"
-if command -v hyprctl >/dev/null 2>&1 && [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
-    if hyprctl reload; then
-        ok "The Hyprland configuration was reloaded."
-    else
-        warn "hyprctl reload failed. Check your Hyprland session."
-    fi
+# --------------------------------------------------
+# Ask whether to start the latest daemon
+# --------------------------------------------------
 
-    step "Checking Hyprland configuration errors"
-    if hyprctl configerrors; then
-        ok "The configerrors command completed."
+step "Daemon startup"
+
+printf "Start the Keyboard Mouse daemon now? [y/N] "
+read -r START_CHOICE
+
+if [[ "$START_CHOICE" =~ ^[Yy]$ ]]; then
+    # Restart ensures that an old daemon is not mistaken
+    # for the newly installed process.
+    if "$LAUNCHER_DST" restart-daemon; then
+        sleep 1
+
+        if pgrep -u "$(id -u)" -f \
+            '[k]eyboard-mouse-daemon\.py' >/dev/null 2>&1; then
+            ok "Daemon process detected."
+        else
+            warn "Daemon process was not detected."
+            [[ -f "$LOG_FILE" ]] && tail -n 50 "$LOG_FILE" || true
+        fi
     else
-        warn "hyprctl configerrors failed."
+        warn "Daemon startup failed."
+        [[ -f "$LOG_FILE" ]] && tail -n 50 "$LOG_FILE" || true
     fi
 else
-    warn "No active Hyprland session was detected; skipping hyprctl reload/configerrors."
+    ok "Daemon startup skipped."
 fi
+
+# --------------------------------------------------
+# Reload Hyprland if available
+# --------------------------------------------------
+
+step "Checking Hyprland"
+
+if command -v hyprctl >/dev/null 2>&1 &&
+   [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+
+    hyprctl reload || warn "Hyprland reload failed."
+    hyprctl configerrors || warn "Could not check Hyprland config errors."
+else
+    warn "No active Hyprland session detected; skipping reload."
+fi
+
+# --------------------------------------------------
+# Finish
+# --------------------------------------------------
 
 printf "\n====================================\n"
-printf "${GREEN}Installation steps completed.${RESET}\n"
+printf "${GREEN}Installation finished.${RESET}\n"
+printf "Application directory: %s\n" "$TARGET_DIR"
 printf "Settings UI: %s\n" "$UI_DST"
-printf "Daemon log:  %s\n" "/tmp/keyboard-mouse-daemon.log"
-printf "To open settings:\n  python3 '%s'\n" "$UI_DST"
-printf "To restart the daemon:\n  '%s' restart-daemon\n" "$LAUNCHER_DST"
+printf "Daemon log: %s\n" "$LOG_FILE"
+printf "Open settings: %s settings\n" "$LAUNCHER_DST"
+printf "Stop mouse mode: %s stop\n" "$LAUNCHER_DST"
+printf "Restart daemon: %s restart-daemon\n" "$LAUNCHER_DST"
+printf "Kill daemon: pkill -f '[k]eyboard-mouse-daemon'\n"
 printf "====================================\n"
