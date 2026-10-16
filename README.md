@@ -48,7 +48,6 @@ Directory Structure
 
 
 ```
-systemctl --user enable --now ydotool.service
 sudo usermod -aG input "$USER"
 sudo mkdir -p ~/.config/keyboard-mouse/
 
@@ -75,6 +74,7 @@ chmod +x ~/.config/keyboard-mouse/keyboard-mouse.sh
 Arch
 ```
 sudo pacman -S python-evdev ydotool libnotify
+systemctl --user enable --now ydotool.service
 hyprctl reload
 hyprctl configerrors
 ```
@@ -82,6 +82,7 @@ Debian / Ubuntu
 ```
 sudo apt update
 sudo apt install -y python3-evdev ydotool ydotoold libnotify-bin xdotool
+systemctl --user enable --now ydotool.service
 
 python3 - <<'PY'
 from pathlib import Path
