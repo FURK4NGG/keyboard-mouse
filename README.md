@@ -33,6 +33,7 @@ Other Wayland compositors and desktop environments have not been verified yet.
 - [x] English and Turkish interface languages
 
 
+
 ## 📦 Setup
 
 Directory Structure  
@@ -78,7 +79,107 @@ sudo pacman -S python-evdev ydotool libnotify
 Debian / Ubuntu
 ```
 sudo apt update
-sudo apt install python3-evdev ydotool libnotify-bin
+sudo apt install -y python3-evdev ydotool ydotoold libnotify-bin xdotool
+
+python3 - <<'PY'
+from pathlib import Path
+import re
+
+path = Path.home() / ".config/keyboard-mouse/keyboard-mouse-daemon.py"
+source = path.read_text()
+
+pattern = r"(?ms)^def send_move\(.*?(?=^def current_speed\()"
+
+replacement = '''def send_move(x, y, step=None):
+    """Move the cursor using the active desktop's appropriate tool."""
+    if step is None:
+        step = current_speed()
+
+    dx = int(x * step)
+    dy = int(y * step)
+
+    if dx == 0 and dy == 0:
+        return
+
+    import os
+    import shutil
+
+    # Prefer the native Wayland path on Hyprland.
+    is_hyprland = bool(os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"))
+    is_wayland = os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland"
+
+    try:
+        if is_hyprland or is_wayland:
+            if not shutil.which("ydotool"):
+                print("Mouse movement failed: ydotool is not installed.", flush=True)
+                return
+
+            # ydotool uses absolute coordinates on this setup.
+            # Read the current cursor position from Hyprland and apply
+            # the requested relative offset before sending the new position.
+            if is_hyprland and shutil.which("hyprctl"):
+                result = subprocess.run(
+                    ["hyprctl", "cursorpos"],
+                    capture_output=True, text=True, timeout=2, check=True
+                )
+                match = re.search(r"(-?\\\\d+)\\\\s*,\\\\s*(-?\\\\d+)", result.stdout)
+                if not match:
+                    print(
+                        f"Could not read Hyprland cursor position: {result.stdout.strip()}",
+                        flush=True
+                    )
+                    return
+
+                current_x, current_y = map(int, match.groups())
+                target_x = current_x + dx
+                target_y = current_y + dy
+
+                result = subprocess.run(
+                    ["ydotool", "mousemove", "--", str(target_x), str(target_y)],
+                    capture_output=True, text=True, timeout=2, check=False
+                )
+            else:
+                print(
+                    "Wayland detected, but relative movement currently requires "
+                    "Hyprland cursor-position support.",
+                    flush=True
+                )
+                return
+        else:
+            # X11: xdotool supports true relative movement.
+            if not shutil.which("xdotool"):
+                print("Mouse movement failed: install xdotool.", flush=True)
+                return
+
+            result = subprocess.run(
+                ["xdotool", "mousemove_relative", "--", str(dx), str(dy)],
+                capture_output=True, text=True, timeout=2, check=False
+            )
+
+        if result.returncode != 0:
+            print(
+                f"Mouse movement failed: {result.stderr.strip()}",
+                flush=True
+            )
+
+    except Exception as exc:
+        print(f"Mouse movement error: {exc}", flush=True)
+
+'''
+
+updated, count = re.subn(pattern, replacement, source, count=1)
+if count != 1:
+    raise SystemExit(
+        "Could not find send_move() and current_speed() in the expected format. "
+        "No changes were made."
+    )
+
+backup = path.with_suffix(path.suffix + ".bak")
+backup.write_text(source)
+path.write_text(updated)
+print(f"Updated: {path}")
+print(f"Backup:  {backup}")
+PY
 ```
 Fedora
 ```
@@ -88,7 +189,7 @@ sudo dnf install python3-evdev ydotool libnotify
 
 ## 🎉 Run
 ```
-~/.config/scripts/keyboard-mouse.sh daemon
+~/.config/keyboard-mouse/keyboard-mouse.sh daemon
 hyprctl reload
 hyprctl configerrors
 ```
