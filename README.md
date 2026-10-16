@@ -180,6 +180,10 @@ path.write_text(updated)
 print(f"Updated: {path}")
 print(f"Backup:  {backup}")
 PY
+
+
+python3 -m py_compile ~/.config/keyboard-mouse/keyboard-mouse-daemon.py
+~/.config/keyboard-mouse/keyboard-mouse.sh restart-daemon
 ```
 Fedora
 ```
