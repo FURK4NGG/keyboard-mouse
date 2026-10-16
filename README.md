@@ -50,7 +50,7 @@ Directory Structure
 ```
 systemctl --user enable --now ydotool.service
 sudo usermod -aG input "$USER"
-sudo mkdir -p ~/.config/scripts/
+sudo mkdir -p ~/.config/keyboard-mouse/
 
 git clone https://github.com/FURK4NGG/keyboard-mouse.git
 cd keyboard-mouse
@@ -63,9 +63,9 @@ cp keyboard-mouse-daemon.py \
    README.md \
    ~/.config/keyboard-mouse/
 
-sudo chown "$USER:$USER" ~/.config/scripts/keyboard-mouse.sh
-sudo chown "$USER:$USER" ~/.config/scripts/keyboard-mouse-daemon.py
-sudo chown "$USER:$USER" ~/.config/scripts/keyboard-mouse-ui.py
+sudo chown "$USER:$USER" ~/.config/keyboard-mouse/keyboard-mouse.sh
+sudo chown "$USER:$USER" ~/.config/keyboard-mouse/keyboard-mouse-daemon.py
+sudo chown "$USER:$USER" ~/.config/keyboard-mouse/keyboard-mouse-ui.py
 chmod +x ~/.config/keyboard-mouse/keyboard-mouse-daemon.py  
 chmod +x ~/.config/keyboard-mouse/keyboard-mouse-ui.py  
 chmod +x ~/.config/keyboard-mouse/keyboard-mouse.sh  
