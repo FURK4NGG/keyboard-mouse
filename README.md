@@ -75,6 +75,8 @@ chmod +x ~/.config/keyboard-mouse/keyboard-mouse.sh
 Arch
 ```
 sudo pacman -S python-evdev ydotool libnotify
+hyprctl reload
+hyprctl configerrors
 ```
 Debian / Ubuntu
 ```
@@ -194,8 +196,6 @@ sudo dnf install python3-evdev ydotool libnotify
 ## 🎉 Run
 ```
 ~/.config/keyboard-mouse/keyboard-mouse.sh daemon
-hyprctl reload
-hyprctl configerrors
 ```
 
 Settings UI: ```/home/bob/.config/keyboard-mouse/keyboard-mouse-ui.py```  
