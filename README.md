@@ -189,7 +189,102 @@ python3 -m py_compile ~/.config/keyboard-mouse/keyboard-mouse-daemon.py
 ```
 Fedora
 ```
-sudo dnf install python3-evdev ydotool libnotify
+sudo dnf install -y python3-evdev ydotool libnotify xdotool
+sudo systemctl enable --now ydotool
+
+python3 - <<'PY'
+from pathlib import Path
+import re
+
+path = Path.home() / ".config/keyboard-mouse/keyboard-mouse-daemon.py"
+
+if not path.exists():
+    raise SystemExit(f"Daemon file not found: {path}")
+
+source = path.read_text()
+
+pattern = r"(?ms)^def send_move\(.*?(?=^def current_speed\()"
+
+replacement = '''def send_move(x, y, step=None):
+    """Select mouse movement method based on the desktop session."""
+    import os
+    import shutil
+    import re
+
+    if step is None:
+        step = current_speed()
+
+    dx = int(x * step)
+    dy = int(y * step)
+
+    if dx == 0 and dy == 0:
+        return
+
+    is_hyprland = bool(os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"))
+    is_wayland = os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland"
+
+    try:
+        if is_hyprland:
+            if not shutil.which("ydotool") or not shutil.which("hyprctl"):
+                print("Mouse movement failed: ydotool or hyprctl not found.", flush=True)
+                return
+
+            result = subprocess.run(
+                ["hyprctl", "cursorpos"],
+                capture_output=True, text=True, timeout=2, check=True
+            )
+
+            match = re.search(r"(-?\\d+)\\s*,\\s*(-?\\d+)", result.stdout)
+            if not match:
+                print(f"Could not parse cursor position: {result.stdout.strip()}", flush=True)
+                return
+
+            cx, cy = map(int, match.groups())
+            result = subprocess.run(
+                ["ydotool", "mousemove", "--", str(cx + dx), str(cy + dy)],
+                capture_output=True, text=True, timeout=2, check=False
+            )
+
+        elif is_wayland:
+            print("Unsupported Wayland compositor: this movement method requires Hyprland.", flush=True)
+            return
+
+        else:
+            if not shutil.which("xdotool"):
+                print("Mouse movement failed: install xdotool.", flush=True)
+                return
+
+            result = subprocess.run(
+                ["xdotool", "mousemove_relative", "--", str(dx), str(dy)],
+                capture_output=True, text=True, timeout=2, check=False
+            )
+
+        if result.returncode != 0:
+            print(f"Mouse movement failed: {result.stderr.strip()}", flush=True)
+
+    except Exception as exc:
+        print(f"Mouse movement error: {exc}", flush=True)
+
+'''
+
+updated, count = re.subn(pattern, replacement, source, count=1)
+
+if count != 1:
+    raise SystemExit("Could not locate send_move(). No changes made.")
+
+backup = path.with_suffix(path.suffix + ".bak")
+backup.write_text(source)
+path.write_text(updated)
+
+import py_compile
+py_compile.compile(str(path), doraise=True)
+
+print(f"Updated: {path}")
+print(f"Backup:  {backup}")
+print("Python syntax check passed.")
+PY
+
+~/.config/keyboard-mouse/keyboard-mouse.sh restart-daemon
 ```
 <br><br>
 
