@@ -20,7 +20,7 @@ from evdev import InputDevice, ecodes, list_devices
 RUNTIME_DIR = Path(
     os.environ.get(
         "XDG_RUNTIME_DIR",
-        f"/run/user/{os.getuid()}"
+        str(Path("/run/user") / str(os.getuid()))
     )
 )
 
@@ -232,7 +232,7 @@ def load_config():
     ) as exc:
 
         print(
-            f"Config okunamadı, varsayılanlar kullanılacak: {exc}",
+            f"Could not read config; using defaults: {exc}",
             file=sys.stderr
         )
 
@@ -256,7 +256,7 @@ def maybe_reload_config():
         pressed_inputs.clear()
 
         print(
-            "Config yeniden yüklendi.",
+            "Configuration reloaded.",
             flush=True
         )
 
@@ -586,7 +586,7 @@ def format_groups(groups):
     alternatives = []
 
     if not isinstance(groups, list):
-        return "atanmamış"
+        return "unassigned"
 
     for combo in groups:
 
@@ -608,7 +608,7 @@ def format_groups(groups):
     return (
         " / ".join(alternatives)
         if alternatives
-        else "atanmamış"
+        else "unassigned"
     )
 
 
@@ -760,8 +760,8 @@ def set_mode(active):
         close_groups = config.get("mode", {}).get("close", [])
         close_text = format_groups(close_groups)
 
-        if not close_text or close_text == "atanmamış":
-            close_text = "atanmamış"
+        if not close_text or close_text == "unassigned":
+            close_text = "unassigned"
 
         message = f"Mouse mode enabled — {close_text} to stop mouse mode"
 
@@ -787,8 +787,8 @@ def set_mode(active):
         open_groups = config.get("mode", {}).get("open", [])
         open_text = format_groups(open_groups)
 
-        if not open_text or open_text == "atanmamış":
-            open_text = "atanmamış"
+        if not open_text or open_text == "unassigned":
+            open_text = "unassigned"
 
         message = f"Mouse mode disabled — {open_text} to start mouse mode"
 
@@ -1302,7 +1302,7 @@ async def main():
     try:
         fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
-        print("Daemon zaten çalışıyor; ikinci instance başlatılmadı.", flush=True)
+        print("Another daemon instance is already running; the second instance was not started.", flush=True)
         lock_handle.close()
         return 0
 
@@ -1313,12 +1313,12 @@ async def main():
     if not devices:
 
         print(
-            "Erişilebilir klavye/mouse bulunamadı.",
+            "No accessible keyboard or mouse devices were found.",
             file=sys.stderr
         )
 
         print(
-            'Kullanıcının "input" grubunda olduğunu kontrol et.',
+            'Check input-device permissions. On many distributions, adding your user to the "input" group and logging in again is required.',
             file=sys.stderr
         )
 
@@ -1337,12 +1337,12 @@ async def main():
     )
 
     print(
-        f"Modu aç: {config['mode']['open']}",
+        f"Open mode: {config['mode']['open']}",
         flush=True
     )
 
     print(
-        f"Modu kapat: {config['mode']['close']}",
+        f"Close mode: {config['mode']['close']}",
         flush=True
     )
 

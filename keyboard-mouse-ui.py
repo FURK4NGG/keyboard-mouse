@@ -236,7 +236,7 @@ class ComboRow(Gtk.Box):
     def change(self, index, value):
         self.window.config[self.section][self.action][self.group_index][index] = value
         self.buttons[index].value = value
-        self.buttons[index].set_label(pretty(value) if value else "Tuş seç")
+        self.buttons[index].set_label(pretty(value) if value else tr("select_key"))
 
     def rebuild_buttons(self):
         while self.get_first_child():
@@ -448,8 +448,6 @@ class SettingsWindow(Gtk.ApplicationWindow):
         runtime_dir = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
         active_file = runtime_dir / "keyboard-mouse" / "active"
         launcher = Path(__file__).resolve().parent / "keyboard-mouse.sh"
-        if not launcher.exists():
-            launcher = Path(__file__).resolve().parent / "keyboard-mouse2.sh"
 
         try:
             active = active_file.exists()
