@@ -93,6 +93,15 @@ hyprctl reload
 hyprctl configerrors
 ```
 
+Settings UI: /home/bob/.config/keyboard-mouse/keyboard-mouse-ui.py
+Daemon log:  /tmp/keyboard-mouse-daemon.log
+To open settings:
+  python3 '/home/bob/.config/keyboard-mouse/keyboard-mouse-ui.py'
+To restart the daemon:
+  '/home/bob/.config/keyboard-mouse/keyboard-mouse.sh' restart-daemon
+To kill the daemon:```pkill -f '[k]eyboard-mouse-daemon'```
+
+
 <br><br>
 
 
