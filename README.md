@@ -69,7 +69,7 @@ chmod +x ~/.config/keyboard-mouse/keyboard-mouse-daemon.py
 chmod +x ~/.config/keyboard-mouse/keyboard-mouse-ui.py  
 chmod +x ~/.config/keyboard-mouse/keyboard-mouse.sh  
 ```
-
+<br><br>
 
 Arch
 ```
@@ -78,6 +78,8 @@ systemctl --user enable --now ydotool.service
 hyprctl reload
 hyprctl configerrors
 ```
+<br>
+
 Debian / Ubuntu
 ```
 sudo apt update
@@ -188,6 +190,8 @@ PY
 python3 -m py_compile ~/.config/keyboard-mouse/keyboard-mouse-daemon.py
 ~/.config/keyboard-mouse/keyboard-mouse.sh restart-daemon
 ```
+<br>
+
 Fedora
 ```
 sudo dnf install -y python3-evdev ydotool libnotify xdotool
