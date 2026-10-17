@@ -288,6 +288,9 @@ PY
 ~/.config/keyboard-mouse/keyboard-mouse.sh restart-daemon
 ```
 <br><br>
+## ------------------HYPRLAND.CONF------------------
+exec-once = ~/.config/keyboard-mouse/keyboard-mouse-daemon.py
+<br><br>
 
 ## 🎉 Run
 ```
